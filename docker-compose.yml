@@ -25,5 +25,19 @@ services:
       backend:
         condition: service_healthy
 
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: notes
+      POSTGRES_PASSWORD: notes
+      POSTGRES_DB: notes
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notes -d notes"]
+      interval: 10s
+      retries: 5
+
 volumes:
   notes-data:
+  pg-data:
