@@ -33,3 +33,13 @@ describe('sortNotes', () => {
     expect(sortNotes([older, newer]).map((n) => n.id)).toEqual(['2', '1']);
   });
 });
+
+describe('my extra checks', () => {
+  it('accepts a title of exactly 80 characters', () => {
+    expect(buildNote({ title: 'a'.repeat(80) }).title).toHaveLength(80);
+  });
+
+  it('rejects a title that is only spaces', () => {
+    expect(() => buildNote({ title: '   ' })).toThrow(ValidationError);
+  });
+});
