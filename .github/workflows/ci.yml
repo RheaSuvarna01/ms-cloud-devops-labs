@@ -43,7 +43,27 @@ jobs:
   docker:
     needs: [backend, frontend]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t notes-backend:${{ github.sha }} ./backend
-      - run: docker build --build-arg API_URL=http://localhost:3000 -t notes-frontend:${{ github.sha }} ./frontend
+      - name: Set image names (GHCR needs lowercase)
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "BACKEND_IMAGE=ghcr.io/$OWNER/notes-backend:${{ github.sha }}" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=ghcr.io/$OWNER/notes-frontend:${{ github.sha }}" >> "$GITHUB_ENV"
+      - run: docker build -t "$BACKEND_IMAGE" ./backend
+      - run: docker build --build-arg API_URL=http://localhost:3000 -t "$FRONTEND_IMAGE" ./frontend
+      - name: Log in to GHCR
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push images
+        if: github.event_name == 'push'
+        run: |
+          docker push "$BACKEND_IMAGE"
+          docker push "$FRONTEND_IMAGE"
